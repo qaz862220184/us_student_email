@@ -1,0 +1,5 @@
+six
+requests
+airtest
+hrpc>=1.0.5
+websocket-client==0.48.0

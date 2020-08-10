@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: pocoui
+Version: 1.0.79
+Summary: Poco cross-engine UI automated test framework.
+Home-page: https://github.com/AirtestProject/Poco
+Author: Netease Games
+Author-email: lxn3032@corp.netease.com, gzliuxin@corp.netease.com
+License: Apache License 2.0
+Description: Poco cross-engine UI automated test framework. 2018 present by NetEase Games
+Keywords: poco,automation test,ui automation
+Platform: UNKNOWN

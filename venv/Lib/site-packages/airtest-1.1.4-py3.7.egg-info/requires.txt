@@ -1,0 +1,17 @@
+Jinja2>=2.8
+Pillow>=3.4.0
+requests>=2.11.1
+six
+mss==4.0.3
+opencv-contrib-python<=3.4.2.17
+pywinauto==0.6.3
+pywin32
+
+[docs]
+sphinx
+recommonmark
+sphinx_rtd_theme
+mock
+
+[tests]
+nose

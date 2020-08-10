@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: airtest
+Version: 1.1.4
+Summary: UI Test Automation Framework for Games and Apps on Android/iOS/Windows/Linux
+Home-page: https://github.com/AirtestProject/Airtest
+Author: Netease Games
+Author-email: gzliuxin@corp.netease.com
+License: Apache License 2.0
+Description: UI Test Automation Framework for Games and Apps on Android/iOS/Windows, present by NetEase Games
+Keywords: automation,automated-test,game,android,ios,windows,linux
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Provides-Extra: tests
+Provides-Extra: docs
