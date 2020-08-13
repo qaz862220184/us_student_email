@@ -138,8 +138,8 @@ async def main():
             #'--proxy-server={}'.format(proxy_ip)
 
             #'--proxy-server=59.38.222.151:3128',
-            #'--proxy-server=192.168.1.250:7890',
-            '--proxy-server=175.6.66.48:3128'
+            '--proxy-server=192.168.1.250:7890',
+            #'--proxy-server=175.6.66.48:3128'
         ]
     })
     #创建一个新的隐身浏览器上下文。这不会与其他浏览器上下文共享 cookie /缓存
