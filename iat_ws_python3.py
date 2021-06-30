@@ -170,8 +170,8 @@ def run(path_text):
     data_text = ''
     time1 = datetime.now()
     global wsParam
-    wsParam = Ws_Param(APPID='5f2a7685', APIKey='fbd23d241fdd8dcc726488b445ed1560',
-                       APISecret='90132c7755e460155598254fb3e160ab',
+    wsParam = Ws_Param(APPID='**********', APIKey='**********',
+                       APISecret='**********',
                        AudioFile=path_text)
     websocket.enableTrace(False)
     wsUrl = wsParam.create_url()
@@ -188,8 +188,8 @@ def run(path_text):
 if __name__ == "__main__":
     # 测试时候在此处正确填写相关信息即可运行
     time1 = datetime.now()
-    wsParam = Ws_Param(APPID='5f2a7685', APIKey='fbd23d241fdd8dcc726488b445ed1560',
-                       APISecret='90132c7755e460155598254fb3e160ab',
+    wsParam = Ws_Param(APPID='**********', APIKey='**********',
+                       APISecret='**********',
                        AudioFile=r"C:/Users\Win\Downloads\payload.mp3")
     websocket.enableTrace(False)
     wsUrl = wsParam.create_url()
