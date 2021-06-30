@@ -5,11 +5,12 @@ import openpyxl as xl
 import os
 import requests
 import pyautogui
+
+import socket
 from lxml import etree
-from pyppeteer import launch
+from pyppeteer import launch,launcher
 import random
-User_Agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
-User_Agent1 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3542.0 Safari/537.36'
+#launcher.DEFAULT_ARGS.remove("--enable-automation")
 pyppeteer.DEBUG = True
 
 
@@ -26,14 +27,24 @@ def screen_size():
 url1 = 'https://www.fakeaddressgenerator.com/'
 url2 = 'https://www.opencccapply.net/gateway/apply?cccMisCode=531'
 # 前期注册完成，未跳转成功则使用该url
-url3 = 'https://idp.openccc.net/idp/profile/SAML2/Unsolicited/SSO?execution=e2s1'
+#url3 = 'https://idp.openccc.net/idp/profile/SAML2/Unsolicited/SSO?execution=e2s1'
+resetIPAPI = "http://192.168.1.239:22999/api/refresh_sessions/24000"
 
+def GetSessionProxy():
+    super_proxy = socket.gethostbyname('zproxy.lum-superproxy.io')
+    url = "http://%s-country-us-session-%s:%s@" + super_proxy + ":%d"
+    port = 22225
 
+    session_id = random.randint(0, 116225344)
+    return url % ('lum-customer-hl_f5a6deb2-zone-sellerbdata', session_id, 'bcvjau85n9e9', port)
+
+from fake_useragent import UserAgent
+ua =UserAgent()
 
 async def get_user_detail():
 
     browser = await launch({
-        'userAgent': User_Agent1,
+        'userAgent': ua.chrome,
         'executablePath': pyppeteer.launcher.executablePath(),
         #'headless': False,
         'dumpio': True,
@@ -46,13 +57,12 @@ async def get_user_detail():
             '--hide-scrollbars',
             '--disable-bundled-ppapi-flash',
             '--mute-audio',
-            '--no-sandbox',
+            #'--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-gpu',
-            '--enable-automation',
             #'--proxy-server={}'.format(proxy_ip)
-             #'--proxy-server=192.168.1.250:7890',
-            '--proxy-server=192.168.1.239:24005'
+            #'--proxy-server=192.168.1.250:7890',
+            '--proxy-server=192.168.1.239:24000'
         ]
     })
     page = await browser.newPage()
@@ -85,7 +95,12 @@ async def get_user_detail():
         user_detail.update({a: b})
 
     # 获取email地址
+    await page.waitFor(5000)
     page1 = await browser.newPage()
+    await page1.setViewport({  # 最大化窗口
+        "width": width,
+        "height": 900
+    })
     await page1.goto('https://www.temporary-mail.net/')
     await page1.waitFor(10000)
     email = await page1.Jeval('#active-mail','el => el.value')
@@ -97,20 +112,18 @@ async def get_user_detail():
 async def main():
 
     #username = 'automation2'
-    username = ''.join(random.sample("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 8))
-    user_detail.update({'username':username})
-    print('username:',username)
     psd = 'qaz2020'
     PIN = '9210'
     #print("in main ")
     #print(os.environ.get('PYPPETEER_CHROMIUM_REVISION'))
     # 浏览器打开失败
+
     browser = await launch({
-        'userAgent' : User_Agent1,
+        #'userAgent' : ua.chrom,
         'executablePath' : pyppeteer.launcher.executablePath(),
         'headless': False,
         'dumpio': True,
-        'autoClose': False,
+        'autoClose': True,
         'args': [
             '--no-sandbox',
             "--start-maximized",
@@ -119,16 +132,22 @@ async def main():
             '--hide-scrollbars',
             '--disable-bundled-ppapi-flash',
             '--mute-audio',
-            '--no-sandbox',
+            #'--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-gpu',
-            '--enable-automation',
             #'--proxy-server={}'.format(proxy_ip)
+
+            #'--proxy-server=59.38.222.151:3128',
             #'--proxy-server=192.168.1.250:7890',
-            #'--proxy-server=192.168.1.239:24002'
+            #'--proxy-server=192.168.1.239:24000'
         ]
     })
-
+    #创建一个新的隐身浏览器上下文。这不会与其他浏览器上下文共享 cookie /缓存
+    await browser.createIncognitoBrowserContext()
+    # page2 = await browser.newPage()
+    # await page2.goto(resetIPAPI)
+    # await page2.close()
+    await asyncio.sleep(1)
     page = await browser.newPage()
 
     width, height = screen_size()
@@ -137,12 +156,15 @@ async def main():
         "width": width,
         "height": 900
     })
-    await page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
-                                     '{ webdriver:{ get: () => false } }) }')
+    # await page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
+    #                                  '{ webdriver:{ get: () => false } }) }')
+
     # await asyncio.wait([
     #     page.waitForNavigation({'timeout': 1000*60}),
     #     page.goto(url2)
     # ])
+    # await page.goto(resetIPAPI)
+    # await page.close()
     await page.goto(url2)
     #await page.waitForNavigation()
 
@@ -263,42 +285,34 @@ async def main():
     await page.type('#inputSecurityAnswer3', 'thirdly')
     await page.waitFor(1000)
 
-    #await page.hover('')
-    # await page.mouse.move(478,804)
-    # await page.mouse.down()
-    # await page.mouse.up()
-    #await page.hover('#recaptcha > div > div')
+
     await page.mouse.click(478,754)
-    # pyautogui.moveTo(478,804)
-    # pyautogui.click()
-    await page.waitFor(5000)
     print('点击人机验证')
+    await page.waitFor(2000)
+
+    await page.mouse.move(550,880)
     await page.mouse.click(576,877)
-    # pyautogui.moveTo(576,927)
-    # pyautogui.click()
-    await page.waitFor(5000)
+
     print('点击音频验证')
+    await page.waitFor(5000)
 
-    # pyautogui.moveTo(638,846)
-    # pyautogui.click()
-    # await page.waitFor(2000)
-    # print('点击下载按钮')
-
-    #获取不到reCAPTCHE中src的值
-    # title = await page.querySelector('#audio-source')
-    # print(title)
-    # print('获取play的src')
 
     try:
         frame =  page.frames
         for f in frame:
             title = await f.title()
             if title == 'reCAPTCHA':
+
                 link = await f.Jeval('#audio-source','el => el.src')
                 print(link)
                 # 跳转到链接网站进行下载
+                await page._client.send('Page.setDownloadBehavior',{
+                    'behavior': 'allow',
+                    'downloadPath':'./'
+                })
                 download_dir = r'C:\Users\Win\Downloads'
                 path_text = r'C:\Users\Win\Downloads\payload.mp3'
+                path_text1 = r'./payload.mp'
                 if os.path.exists(path_text):
                     os.remove(path_text)
                     print('已删除')
@@ -309,45 +323,22 @@ async def main():
                     "height": height
                 })
                 await page1.goto(link)
-                await page1.waitFor(5000)
+                await page1.waitFor(1000)
 
 
-                # 全频时位置1083 602
-                await page1.mouse.click(520,370)
-                print('dianji400')
-                await page1.waitFor(1000)
-                await page1.mouse.click(510,370)
-                print('dianji410')
-                await page1.waitFor(1000)
-                await page1.mouse.click(530,370)
+                await page1.hover('body > video ')
+                start_x = page1.mouse._x
+                start_y = page1.mouse._y
+                print(start_x,start_y)
+                await page1.mouse.click(start_x+125,start_y+55,{'delay':50})
                 print('dianji420')
                 await page1.waitFor(1000)
-                await page1.mouse.click(520,400)
+                await page1.mouse.click(start_x+125,start_y+55,{'delay':50})
                 print('dianji430')
-                await page1.waitFor(1000)
-                await page1.mouse.click(510,400)
-                print('dianji440')
-                await page1.waitFor(1000)
-                await page1.mouse.click(530,400)
-                print('dianji450,370')
-                await page1.waitFor(1000)
-
-                await page1.hover('body > video')
-                satrt_x = page1.mouse._x
-                satrt_y = page1.mouse._y
-                print(satrt_x,satrt_y)
-                await page1.waitFor(2000)
-                await page1.click('body > video')
-                # pyautogui.moveTo(522,419)
-                # pyautogui.click()
+                await page1.keyboard.press('Enter')
 
 
-
-                await page1.waitFor(500)
-                await page1.mouse.click(523,367)
-                # pyautogui.moveTo(420,408)
-                # pyautogui.click()
-                await page1.waitFor(5000)
+                await page1.waitFor(3000)
                 await page1.close()
                 # response = requests.get(link)
                 # print(response)
@@ -356,26 +347,17 @@ async def main():
                 import iat_ws_python3
                 data = iat_ws_python3.data_text
                 print(data)
-                await page.waitFor(10000)
+                await page.waitFor(5000)
                 await f.type('#audio-response',data)
-                await page.waitFor(2000)
+                await page.waitFor(1000)
                 await f.click('#recaptcha-verify-button')
-                '''
-                # 验证是否通过
-                tag = await f.Jeval('#recaptcha-anchor', 'el => el.class')
-                if tag == 'recaptcha-checkbox goog-inline-block recaptcha-checkbox-unchecked rc-anchor-checkbox recaptcha-checkbox-checked':
-                    print('验证通过')
-                    await page.waitFor(2000)
-                    await f.click('# accountFormSubmit')
-                else:
-                    print('验证失败')
-                '''
+
     except BaseException:
         print("人机验证失败，请重试")
-        #await browser.close()
+        await browser.close()
 
     # 现在前期页面注册已完成
-    print('前期注册已完成,接下来进行信息注册')
+    #print('前期注册已完成,接下来进行信息注册')
     await page.waitFor(2000)
     #await page.click('#accountFormSubmit')
     await asyncio.wait([
@@ -383,49 +365,41 @@ async def main():
         page.click('#accountFormSubmit'),
     ])
     print('现在是可以看见CCCID的页面')
+    # 将下面部分流程拆分出来
+    global CCCID
     CCCID = await page.querySelector('#registrationSuccess > main > div.column > div > div > div > p:nth-child(1) > strong')
     print(CCCID)
+
     Tag = True
     try:
         await asyncio.wait([
-            page.waitForNavigation({'timeout': 1000*300}),
+            page.waitForNavigation({'timeout': 1000*600}),
             page.click('#registrationSuccess > main > div.column > div > div > button')
         ])
 
         # 强制等待10s，以防止页面未刷新出来
-        await page.waitFor(10000)
+        await page.waitFor(20000)
     except:
         print('页面跳转失败')
+        await page.close()
         Tag = False
     finally:
         print(Tag)
 
 
-    '''
-        注册完成后的页面跳转有可能跳转到登陆界面
-        判断当前页面是否为登陆界面
-        若是则输入用户名密码进行登陆
-        若不是则直接执行接下来的代码
-    '''
-    '''
-    title =  await page.title()
-    if title == 'Sign In | CCC Apply | cccapply.org':
-        await page.type('#inputJUsername',username)
-        await page.waitFor(1000)
-        await page.type('#inputJPassword',psd)
-        await page.waitFor(1000)
-        await page.click('#loginPane > div > form > div:nth-child(2) > div.col-sm-2.sign-in-button-cell > button')
-    '''
-    print('页面跳转成功')
 
+    print('页面跳转')
+
+
+    await page.waitFor(10000)
     # Enrollment
     await page.select('#inputTermId','CAP_3870')
     await page.waitFor(1000)
-    await page.select('#inputEduGoal','A')
+    await page.select('#inputEduGoal','B')
     await page.waitFor(1000)
-    await page.select('#inputMajorCategory','School of Business')
+    await page.select('#inputMajorCategory','School of Humanities Languages Fine and Performing Arts')
     await page.waitFor(1000)
-    await page.select('#inputMajorId','CAP_13585')
+    await page.select('#inputMajorId','CAP_13694')
     await page.waitFor(1000)
     await asyncio.wait([
         page.waitForNavigation(),
@@ -433,6 +407,7 @@ async def main():
     ])
 
     #account
+    await page.waitFor(6000)
     await page.click('#inputAddressSame')
     await page.waitFor(1000)
     await asyncio.wait([
@@ -441,6 +416,8 @@ async def main():
     ])
 
     # education
+    await page.waitFor(6000)
+
     await page.select('#inputEnrollmentStatus','1')
     await page.waitFor(1000)
     await page.select('#inputHsEduLevel','2')
@@ -453,6 +430,8 @@ async def main():
     ])
 
     # citizenship/military
+    await page.waitFor(6000)
+
     await page.select('#inputCitizenshipStatus','1')
     await page.waitFor(1000)
     await page.select('#inputMilitaryStatus','1')
@@ -463,6 +442,8 @@ async def main():
     ])
 
     # residency
+    await page.waitFor(6000)
+
     await page.click('#inputCaRes2YearsYes')
     await page.waitFor(1000)
     await page.click('#inputIsEverInFosterCareNo')
@@ -473,6 +454,8 @@ async def main():
     ])
 
     # need & interests
+    await page.waitFor(6000)
+
     await page.click('#inputEnglishYes')
     await page.waitFor(1000)
     await page.click('#inputFinAidInfoNo')
@@ -481,7 +464,12 @@ async def main():
     await page.waitFor(1000)
     await page.click('#inputAthleticInterest3')
     await page.waitFor(1000)
+
     await page.click('#inputHealthServices')
+    await page.waitFor(1000)
+    await page.click('#inputOnlineClasses')
+    await page.waitFor(1000)
+    await page.click('#inputBasicSkills')
     await page.waitFor(1000)
     await page.click('#inputStudentGov')
     await page.waitFor(1000)
@@ -491,9 +479,11 @@ async def main():
     ])
 
     # demographic information
-    await page.select('#inputGender',user_detail['Gender'])
+    await page.waitFor(6000)
+
+    await page.select('#inputGender',user_detail['Gender'].capitalize())
     await page.waitFor(1000)
-    await page.select('#inputTransgender','Yes')
+    await page.select('#inputTransgender','No')
     await page.waitFor(1000)
     await page.select('#inputOrientation','StraightHetrosexual')
     await page.waitFor(1000)
@@ -513,23 +503,31 @@ async def main():
     ])
 
     # supplemental questions
+    await page.waitFor(6000)
+
     await page.waitFor(2000)
     await page.click('#YESNO_1_no')
+    await page.waitFor(1000)
     await page.click('#YESNO_2_no')
     await page.waitFor(1000)
     await page.click('#YESNO_3_no')
+    await page.waitFor(1000)
     await page.click('#YESNO_4_no')
     await page.waitFor(1000)
     await page.click('#YESNO_5_no')
+    await page.waitFor(1000)
     await page.click('#YESNO_6_no')
     await page.waitFor(1000)
     await page.click('#YESNO_7_no')
+    await page.waitFor(1000)
     await page.click('#YESNO_8_no')
     await page.waitFor(1000)
     await page.click('#_supp_CHECK_1')
+    await page.waitFor(1000)
     await page.click('#_supp_CHECK_2')
     await page.waitFor(1000)
     await page.click('#_supp_CHECK_3')
+    await page.waitFor(1000)
     await page.click('#_supp_CHECK_4')
     await page.waitFor(1000)
     await page.click('#YESNO_9_yes')
@@ -541,8 +539,10 @@ async def main():
     ])
 
     # submission
+    await page.waitFor(6000)
+
     await page.waitFor(2000)
-    await page.click('#inputConsentNo')
+    await page.click('#inputConsentYes')
     await page.waitFor(1000)
     await page.click('#inputESignature')
     await page.waitFor(1000)
@@ -561,66 +561,28 @@ async def main():
     ])
 
     await page.click('#inputEnglishVerySatisfied')
+    await page.waitFor(1000)
     await page.click('#RecommendYes')
+    await page.waitFor(1000)
     await page.click('#applyForm > main > div.column.column1 > div.ccc-page-section.current-fieldset > button')
     await page.waitFor(2000)
+
+    # await page.evaluate('_ => {window.scrollBy(0, window.innerHeight);}')
+    # await page.hover('#continueBox > ol')
+    # x = page.mouse._x
+    # y = page.mouse._y
+    # await page.mouse.click(x,y)
+
+    commit = await page.querySelector('#continueBox > ol')
+    print(commit)
+    await commit.click()
+
+    await page.click('body > div > div > div.logoutRedirect > a')
+
+    await asyncio.sleep(10)
     #await page.click('#Pluto_6_u67l1n1100_5094775_finish-and-sign-out')
-    #await browser.close()
+    await browser.close()
 
-'''
-async def last_regist():
-    browser = await launch({
-        'userAgent': User_Agent1,
-        'executablePath': pyppeteer.launcher.executablePath(),
-        'headless': False,
-        'dumpio': True,
-        'autoClose': False,
-        'args': [
-            '--no-sandbox',
-            "--start-maximized",
-            '--disable-infobars',
-            '--disable-extensions',
-            '--hide-scrollbars',
-            '--disable-bundled-ppapi-flash',
-            '--mute-audio',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-gpu',
-            '--enable-automation',
-            '--proxy-server={}'.format(proxy_ip)
-            # '--proxy-server=192.168.1.250:7890',
-            # '--proxy-server=192.168.1.239:24005'
-        ]
-    })
-    page = await browser.newPage()
-    width, height = screen_size()
-    # print(width,height)
-    await page.setViewport({  # 最大化窗口
-        "width": width,
-        "height": 900
-    })
-    await page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
-                                     '{ webdriver:{ get: () => false } }) }')
-    await page.goto(url2)
-    await page.waitFor(5000)
-    await asyncio.wait([
-        page.waitForNavigation(),
-        page.click('#portal-sign-in-link')
-    ])
-
-    await page.type('#inputJUsername','DYXBIv2W')# user_detail['username']
-    await page.waitFor(1000)
-    await page.type('#inputJPassword','qaz2020')
-    await page.waitFor(1000)
-    await asyncio.wait([
-        page.waitForNavigation({'timeout':120000}),
-        page.click('#loginPane > div > form > div:nth-child(2) > div.col-sm-2.sign-in-button-cell > button')
-    ])
-    await asyncio.wait([
-        page.waitForNavigation({'timeout':120000}),
-        page.click('#beginApplicationButton')
-    ])
-'''
 
 
 def write_excel_file(folder_path):
@@ -655,65 +617,315 @@ def write_excel_file(folder_path):
 # task = asyncio.ensure_future(main())
 # loop.run_until_complete(task)
 
-def get_url():
-    api_url = "http://dps.kdlapi.com/api/getdps/?orderid=979670906001794&num=1&pt=1&sep=1"
-    # 获取API接口返回的代理IP
-    proxy_ip = requests.get(api_url).text
-    print(proxy_ip)
-    username = "sellerbdata"
-    password = "lv6nv17v"
-    proxies = {
-        "http": "http://%(user)s:%(pwd)s@%(proxy)s/" % {"user": username, "pwd": password, "proxy": proxy_ip},
-        "https": "http://%(user)s:%(pwd)s@%(proxy)s/" % {"user": username, "pwd": password, "proxy": proxy_ip}
-    }
-    target_url = "https://dev.kdlapi.com/testproxy"
+async def regist():
+    browser = await launch({
+        # 'userAgent' : ua.chrom,
+        'executablePath': pyppeteer.launcher.executablePath(),
+        #'headless': False,
+        'dumpio': True,
+        'autoClose': False,
+        'args': [
+            '--no-sandbox',
+            "--start-maximized",
+            '--disable-infobars',
+            '--disable-extensions',
+            '--hide-scrollbars',
+            '--disable-bundled-ppapi-flash',
+            '--mute-audio',
 
-    # 使用代理IP发送请求
-    response = requests.get(target_url, proxies=proxies)
+            '--disable-setuid-sandbox',
+            '--disable-gpu',
+            # '--proxy-server={}'.format(proxy_ip)
+            '--proxy-server=192.168.1.250:7890',
+            # '--proxy-server=192.168.1.239:24000'
+        ]
+    })
+    # 创建一个新的隐身浏览器上下文。这不会与其他浏览器上下文共享 cookie /缓存
+    await browser.createIncognitoBrowserContext()
+    # page2 = await browser.newPage()
+    # await page2.goto(resetIPAPI)
+    # await page2.close()
+    await asyncio.sleep(1)
+    page = await browser.newPage()
 
-    # 获取页面内容
-    if response.status_code == 200:
-        print(response.text)
+    width, height = screen_size()
+    # print(width,height)
+    await page.setViewport({  # 最大化窗口
+        "width": width,
+        "height": 900
+    })
+    # await page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
+    #                                  '{ webdriver:{ get: () => false } }) }')
 
-    return proxy_ip
+    await page.goto(url2)
+
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#portal-sign-in-link')
+    ])
+
+    await page.type('#inputJUsername', username)
+    await page.waitFor(500)
+    await page.type('#inputJPassword', 'qaz2020')
+
+    await asyncio.wait([
+        page.waitForNavigation({'timeout': 60000}),
+        page.click('#loginPane > div > form > div:nth-child(2) > div.col-sm-2.sign-in-button-cell > button'),
+        # page.hover('#loginPane > div > form > div:nth-child(2) > div.col-sm-2.sign-in-button-cell > button'),
+        # page.mouse.click(page.mouse._x,page.mouse._y)
+    ])
+    print('强制等待')
+    await page.waitFor(10000)
+    print('强制等待完成')
+
+    await page.waitForSelector('#applyForm')
+    print('等待出线')
+
+    sign = await page.querySelector('#beginApplicationButton')
+    await sign.click()
+
+    print('页面跳转成功')
+    await page.waitFor(6000)
+    # Enrollment
+    await page.select('#inputTermId', 'CAP_3870')
+    await page.waitFor(1000)
+    await page.select('#inputEduGoal', 'B')
+    await page.waitFor(1000)
+    await page.select('#inputMajorCategory', 'School of Humanities Languages Fine and Performing Arts')
+    await page.waitFor(1000)
+    await page.select('#inputMajorId', 'CAP_13694')
+    await page.waitFor(1000)
+    await page.waitFor(5000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # account
+    await page.waitFor(3000)
+    await page.click('#inputAddressSame')
+    await page.waitFor(1000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # education
+    await page.waitFor(6000)
+    await page.select('#inputEnrollmentStatus', '1')
+    await page.waitFor(1000)
+    await page.select('#inputHsEduLevel', '2')
+    await page.waitFor(1000)
+    await page.click('#inputHsAttendance3')
+    await page.waitFor(1000)
+    await page.waitFor(3000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # citizenship/military
+    await page.waitFor(2000)
+    await page.select('#inputCitizenshipStatus', '1')
+    await page.waitFor(1000)
+    await page.select('#inputMilitaryStatus', '1')
+    await page.waitFor(1000)
+    await page.waitFor(3000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # residency
+    await page.waitFor(6000)
+    await page.click('#inputCaRes2YearsYes')
+    await page.waitFor(1000)
+    await page.click('#inputIsEverInFosterCareNo')
+    await page.waitFor(1000)
+    await page.waitFor(5000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # need & interests
+    await page.waitFor(6000)
+    await page.click('#inputEnglishYes')
+    await page.waitFor(1000)
+    await page.click('#inputFinAidInfoNo')
+    await page.waitFor(1000)
+    await page.click('#inputAssistanceNo')
+    await page.waitFor(1000)
+    await page.click('#inputAthleticInterest3')
+    await page.waitFor(1000)
+
+    await page.click('#inputHealthServices')
+    await page.waitFor(1000)
+    await page.click('#inputOnlineClasses')
+    await page.waitFor(1000)
+    await page.click('#inputBasicSkills')
+    await page.waitFor(1000)
+    await page.click('#inputStudentGov')
+    await page.waitFor(1000)
+    await page.waitFor(5000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # demographic information
+    await page.waitFor(6000)
+    await page.select('#inputGender', user_detail['Gender'].capitalize())
+    await page.waitFor(1000)
+    await page.select('#inputTransgender', 'No')
+    await page.waitFor(1000)
+    await page.select('#inputOrientation', 'StraightHetrosexual')
+    await page.waitFor(1000)
+    await page.select('#inputParentGuardianEdu1', '3')
+    await page.waitFor(1000)
+    await page.select('#inputParentGuardianEdu2', '3')
+    await page.waitFor(1000)
+    await page.click('#inputHispanicNo')
+    await page.waitFor(1000)
+    await page.click('#inputRaceEthnicity800')
+    await page.waitFor(1000)
+    await page.click('#inputRaceEthnicity801')
+    await page.waitFor(1000)
+    await page.waitFor(5000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # supplemental questions
+    await page.waitFor(6000)
+    await page.waitFor(2000)
+    await page.click('#YESNO_1_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_2_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_3_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_4_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_5_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_6_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_7_no')
+    await page.waitFor(1000)
+    await page.click('#YESNO_8_no')
+    await page.waitFor(1000)
+    await page.click('#_supp_CHECK_1')
+    await page.waitFor(1000)
+    await page.click('#_supp_CHECK_2')
+    await page.waitFor(1000)
+    await page.click('#_supp_CHECK_3')
+    await page.waitFor(1000)
+    await page.click('#_supp_CHECK_4')
+    await page.waitFor(1000)
+    await page.click('#YESNO_9_yes')
+    # await page.click('#YESNO_10_yes')
+    await page.waitFor(1000)
+    await page.waitFor(5000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click(
+            '#applyForm > main > div.column.column2 > div.buttonBox.ccc-page-section > ol > li.save-continue > button')
+    ])
+
+    # submission
+    await page.waitFor(6000)
+    await page.waitFor(2000)
+    await page.click('#inputConsentYes')
+    await page.waitFor(1000)
+    await page.click('#inputESignature')
+    await page.waitFor(1000)
+    await page.click('#inputFinancialAidAck')
+    await page.waitFor(1000)
+    await page.waitFor(5000)
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#submit-application-button')
+    ])
+
+    job_page = await page.content()
+
+    await asyncio.wait([
+        page.waitForNavigation(),
+        page.click('#applyForm > main > div.column.column1 > div.ccc-page-section.buttonBox > ol > li > button')
+    ])
+
+    await page.click('#inputEnglishVerySatisfied')
+    await page.waitFor(1000)
+    await page.click('#RecommendYes')
+    await page.waitFor(1000)
+    await page.click('#applyForm > main > div.column.column1 > div.ccc-page-section.current-fieldset > button')
+    await page.waitFor(2000)
+
+    '''
+    await page.evaluate('_ => {window.scrollBy(0, window.innerHeight);}')
+    await page.hover('#continueBox > ol')
+    x = page.mouse._x
+    y = page.mouse._y
+    await page.mouse.click(x,y)
+
+    await page.waitFor(5000)
+    await page.click('body > div > div > div.logoutRedirect > a')
+    '''
+    # await asyncio.wait([
+    #     page.waitForNavigation(),
+    #     page.click('body > div > div > div.logoutRedirect > a')
+    # ])
+    # await asyncio.sleep(101)
+
+    # await page.click('#Pluto_6_u67l1n1100_5094775_finish-and-sign-out')
+    await browser.close()
 
 
 if __name__ == '__main__':
-    for i in range(1):
-        detail = []
-        headers = []
-        user_detail = {}
-        #proxy_ip = get_url()
-        #asyncio.get_event_loop().run_until_complete(last_regist())
+    #proxy_ip = GetSessionProxy().split('@')[-1]
+    detail = []
+    headers = []
+    user_detail = {}
+    CCCID = ''
+    username = ''.join(random.sample("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 8))
+    user_detail.update({'username': username})
+    #proxy_ip = get_url()
+    #asyncio.get_event_loop().run_until_complete(last_regist())
+    try:
+        asyncio.get_event_loop().run_until_complete(get_user_detail())
+    except:
+        print("获取用户信息失败")
+        #continue
+
+    print(user_detail)
+    name = user_detail['Full Name']
+    first_name = name.split(' ')[0]
+    middle_name = name.split(' ')[1]
+    last_name = name.split(' ')[2]
+
+    Birthday = user_detail['Birthday']
+    month = Birthday.split('/')[0]
+    day = Birthday.split('/')[1]
+    year = Birthday.split('/')[2]
+
+    SSN = user_detail['Social Security Number'].replace('-', '')
+
+    try:
+        asyncio.get_event_loop().run_until_complete(main())
+        write_excel_file("./")
+    except Exception:
+        print('执行失败，请重试')
         try:
-            asyncio.get_event_loop().run_until_complete(get_user_detail())
+            if CCCID == '':
+                print('申请未完成')
+            else:
+                asyncio.get_event_loop().run_until_complete(regist())
+                write_excel_file('./')
         except:
-            print("获取用户信息失败")
-            continue
-
-
-
-
-
-        print(user_detail)
-        name = user_detail['Full Name']
-        first_name = name.split(' ')[0]
-        middle_name = name.split(' ')[1]
-        last_name = name.split(' ')[2]
-
-        Birthday = user_detail['Birthday']
-        month = Birthday.split('/')[0]
-        day = Birthday.split('/')[1]
-        year = Birthday.split('/')[2]
-
-        SSN = user_detail['Social Security Number'].replace('-', '')
-
-        try:
-            asyncio.get_event_loop().run_until_complete(main())
-            write_excel_file("./")
-        except Exception:
-            print('执行失败，请重试')
-            continue
+            print('注册失败')
+        #continue
 
 
 
