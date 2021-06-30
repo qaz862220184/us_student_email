@@ -1,0 +1,6 @@
+fake_useragent==0.1.11
+PyMySQL==0.9.3
+requests==2.23.0
+beautifulsoup4==4.9.3
+pyppeteer==0.2.5
+websocket_client==1.1.0
