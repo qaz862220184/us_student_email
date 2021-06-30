@@ -39,8 +39,6 @@ STATUS_FIRST_FRAME = 0  # 第一帧的标识
 STATUS_CONTINUE_FRAME = 1  # 中间帧标识
 STATUS_LAST_FRAME = 2  # 最后一帧的标识
 
-data_text = ''
-
 class Ws_Param(object):
     # 初始化
     def __init__(self, APPID, APIKey, APISecret, AudioFile):
@@ -81,8 +79,6 @@ class Ws_Param(object):
         }
         # 拼接鉴权参数，生成url
         url = url + '?' + urlencode(v)
-        # print("date: ",date)
-        # print("v: ",v)
         # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
         # print('websocket url :', url)
         return url
@@ -95,11 +91,8 @@ def on_message(ws, message):
         sid = json.loads(message)["sid"]
         if code != 0:
             errMsg = json.loads(message)["message"]
-            #print("sid:%s call error:%s code is:%s" % (sid, errMsg, code))
-
         else:
             data = json.loads(message)["data"]["result"]["ws"]
-            # print(json.loads(message))
             result = ""
             for i in data:
                 for w in i["cw"]:
@@ -112,13 +105,8 @@ def on_message(ws, message):
                 #print(data[j]['cw'][0]['w'])
                 global data_text
                 data_text += data[j]['cw'][0]['w']
-
-
-
-
     except Exception as e:
         print("receive msg,but parse exception:", e)
-
 
 
 # 收到websocket错误的处理
@@ -177,27 +165,32 @@ def on_open(ws):
 
     thread.start_new_thread(run, ())
 
+def run(path_text):
+    global data_text
+    data_text = ''
+    time1 = datetime.now()
+    global wsParam
+    wsParam = Ws_Param(APPID='5f2a7685', APIKey='fbd23d241fdd8dcc726488b445ed1560',
+                       APISecret='90132c7755e460155598254fb3e160ab',
+                       AudioFile=path_text)
+    websocket.enableTrace(False)
+    wsUrl = wsParam.create_url()
+    ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
+    ws.on_open = on_open
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+    time2 = datetime.now()
+    #print(time2 - time1)
+    #print(data_text)
+    return data_text
 
 
-time1 = datetime.now()
-wsParam = Ws_Param(APPID='5f2a7685', APIKey='fbd23d241fdd8dcc726488b445ed1560',
-                   APISecret='90132c7755e460155598254fb3e160ab',
-                   AudioFile=r'C:\Users\Win\Downloads\payload.mp3')
-websocket.enableTrace(False)
-wsUrl = wsParam.create_url()
-ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
-ws.on_open = on_open
-ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-time2 = datetime.now()
-#print(time2 - time1)
-#print(data_text)
-
+'''
 if __name__ == "__main__":
     # 测试时候在此处正确填写相关信息即可运行
     time1 = datetime.now()
     wsParam = Ws_Param(APPID='5f2a7685', APIKey='fbd23d241fdd8dcc726488b445ed1560',
                        APISecret='90132c7755e460155598254fb3e160ab',
-                       AudioFile=r'C:\Users\Win\Downloads\payload.mp3')
+                       AudioFile=r"C:/Users\Win\Downloads\payload.mp3")
     websocket.enableTrace(False)
     wsUrl = wsParam.create_url()
     ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
@@ -206,3 +199,4 @@ if __name__ == "__main__":
     time2 = datetime.now()
     #print(time2-time1)
     #print(data_text)
+'''
