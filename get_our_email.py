@@ -7,7 +7,7 @@ import requests
 
 
 def get_email():
-    get_email_api = 'http://www.ymxgo.com/api/amazon/get_email'
+    get_email_api = '*********************'
     response = requests.get(get_email_api)
     ret = response.json()
     #print(ret)
@@ -20,7 +20,7 @@ def get_email():
 #get_email()
 
 def get_email_msg(email,email_password,email_server):
-    get_email_msg_api = 'http://103.72.166.155:88/api/email/get_new_email'
+    get_email_msg_api = '***********'
     data = {
     "email":email,
     "email_psw":email_password,
